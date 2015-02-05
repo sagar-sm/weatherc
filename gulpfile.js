@@ -5,6 +5,7 @@ var browserify = require('browserify');
 var reactify = require('reactify');
 var watchify = require('watchify');
 var notify = require("gulp-notify");
+var rename = require('gulp-rename');
  
 var scriptsDir = './public/js';
 var buildDir = './public/js/build';
@@ -29,6 +30,7 @@ function buildScript(file, watch) {
     var stream = bundler.bundle();
     return stream.on('error', handleErrors)
     .pipe(source(file))
+    .pipe(rename('bundle.js'))
     .pipe(gulp.dest(buildDir + '/'));
   }
   bundler.on('update', function() {
