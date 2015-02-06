@@ -21,16 +21,16 @@ var SearchBox = React.createClass({
 
   render: function() {
     return (
-      <div className="large-5 columns">
-        <div className="row collapse">
-          <div className="small-10 columns">
-            <input type="text" placeholder="Search for City, Country" onChange={this.onChange} value={this.state.query}/>
-          </div>
-          <div className="small-2 columns">
-            <a href="#" className="button postfix" onClick={this.handleSubmit}><i className="fi-magnifying-glass"/></a>
+        <div className="large-5 columns">
+          <div className="row collapse">
+            <div className="small-10 columns">
+              <input type="text" placeholder="Search for City, Country" onChange={this.onChange} value={this.state.query}/>
+            </div>
+            <div className="small-2 columns">
+              <a href="#" className="button postfix" onClick={this.handleSubmit}><i className="fi-magnifying-glass"/></a>
+            </div>
           </div>
         </div>
-      </div>
     );
   }
 });
@@ -39,22 +39,27 @@ var SearchBox = React.createClass({
 var City = React.createClass({
   getInitialState: function() {
     return {
-      query: '',
-      units: ''
+      city: '',
+      country:'',
+      temperature:'',
+      description:'',
+      humidity:'',
+      pressure:'',
+      wind:'',
+      date:'',
+      meta: {
+        query: ''
+      } 
     };
   },
 
   fetchData: function() {
     $.get(this.props.source, function(result) {
       if (this.isMounted()) {
-        console.log(result);
         this.setState({
-          units: 'k'
-        });
-        this.setProps({
           city: result.name,
-          country: result.country,
-          temperature: this.convert(result.main.temp, 'f'),
+          country: result.sys.country,
+          temperature: this.convert(result.main.temp, 'k', this.props.units),
           description: result.weather[0].description,
           humidity: result.main.humidity,
           pressure: result.main.pressure,
@@ -63,6 +68,12 @@ var City = React.createClass({
         });
       }
     }.bind(this));
+  },
+
+  updateUnits: function(u) {
+    this.setState({
+      temperature: this.convert(this.state.temperature, u, this.props.units)
+    });
   },
 
   componentDidMount: function() {
@@ -76,11 +87,10 @@ var City = React.createClass({
 
   },
 
-  convert: function(temp, targetUnit) {
-    var currentUnit = this.state.units;
-    this.setState({
-      units: targetUnit
-    });
+  convert: function(temp, currentUnit, targetUnit) {
+
+    console.log(currentUnit, targetUnit);
+
     switch(targetUnit) {
       case 'c': switch(currentUnit) {
         case 'c': return Math.round(temp);              //c->c
@@ -88,7 +98,7 @@ var City = React.createClass({
         case 'k': return Math.round(temp-273.15);       //k->c
       };
       case 'f': switch(currentUnit) {
-        case 'c': return Math.round((temp*9)/5-32);
+        case 'c': return Math.round((temp*9)/5+32);
         case 'f': return Math.round(temp);
         case 'k': return Math.round((temp-273.15)*1.8+32);
       };
@@ -104,34 +114,68 @@ var City = React.createClass({
     return (
       <div className="city">
         <div className="name">
-          <span className="cityName">{this.props.city}</span>
-          <span className="countryName">{this.props.name}</span>
+          <span className="cityName">{this.state.city},&nbsp;</span>
+          <span className="countryName">{this.state.country}</span>
         </div>
-        <div className="temperature">{this.props.temperature}</div>
-        <div className="description">{this.props.description}</div>
+        <div className="temperature">{this.state.temperature}</div>
+        <div className="description">{this.state.description}</div>
         <div className="more">
-          <div className="humidity">{this.props.humidity}</div>
-          <div className="pressure">{this.props.pressure}</div>
-          <div className="wind">{this.props.wind}</div>
-          <div className="date">Updated {this.props.date}</div>
+          <div className="humidity">{this.state.humidity}</div>
+          <div className="pressure">{this.state.pressure}</div>
+          <div className="wind">{this.state.wind}</div>
+          <div className="date">Updated {this.state.date}</div>
         </div>
-        <SearchBox query={this.state.query} doSearch={this.doSearch}/>
+        <SearchBox query={this.state.meta.query} doSearch={this.doSearch}/>
       </div>
 
     );
   }
 });
 
-React.render(
-  <City source="http://api.openweathermap.org/data/2.5/weather?q=nyc,us" />,
-  document.getElementById('l1')
-);
 
-React.render(
-  <City source="http://api.openweathermap.org/data/2.5/weather?q=London,uk" />,
-  document.getElementById('l2')
-);
+var WeatherApp = React.createClass({
+  getInitialState: function() {
+    return {units: 'c'};
+  },
 
+  flipUnits: function() {
+    var prevUnit = this.state.units;
+    if (this.state.units === 'c')
+      this.setState({units: 'f'}, function(){
+        this.refs.city1.updateUnits(prevUnit);
+        this.refs.city2.updateUnits(prevUnit);
+      });
+    else
+      this.setState({units: 'c'}, function(){
+        this.refs.city1.updateUnits(prevUnit);
+        this.refs.city2.updateUnits(prevUnit);
+      });
+  },
+
+  render: function() {
+    return (
+      <div>
+        <div className="row">
+          <div className="large-6 columns">
+            <City ref='city1' source="http://api.openweathermap.org/data/2.5/weather?q=nyc,us" units={this.state.units}/>
+          </div>
+          <div className="large-6 columns">
+            <City ref='city2' source="http://api.openweathermap.org/data/2.5/weather?q=London,uk" units={this.state.units} />
+          </div>
+        </div>
+        <div className="row">
+          <div className="switch small" tabIndex="0">
+            <input id="unitSwitch" onChange={this.flipUnits} type="checkbox"/>
+            <label htmlFor="unitSwitch"></label>
+            {this.state.units}
+          </div>
+        </div>
+      </div>
+    );
+  }
+});
+
+React.render(<WeatherApp/>, document.getElementById('content'));
 
 
 
