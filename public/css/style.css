@@ -1,12 +1,117 @@
 body {
   padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background: #fcfcfc;
+  font: 1em "Lato", Helvetica, Arial, sans-serif;
 }
 
 a {
   color: #00B7FF;
 }
-
 .row {
   max-width: 100% !important;
 }
+
+.row.main {
+  max-width: 75% !important;
+}
+.row.controls {
+  text-align: center;
+}
+
+.row.search {
+  padding: 7px 7px 0 0 !important;
+}
+
+.name {
+  margin-bottom: 15%;
+}
+
+.wi {
+  font-size: 10em;
+  margin-bottom: 20px;
+}
+
+.cityName {
+  font-size: 1.3em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.countryName {
+  font-size: 0.9em;
+}
+
+.temperature {
+  font-size: 7em;
+  font-weight: 100;
+}
+.description {
+  color: #ccc;
+  font-size: 3em;
+  font-weight: 900;
+  text-transform: lowercase;
+}
+.date {
+  font-size: 0.85em;
+}
+
+.tile {
+  background: #fcfcfc;
+  float: left;
+  margin:7px 7px 0 0;
+  padding: 7px 7px 0 0;
+}
+.title {
+  font-size: 0.85em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.qty {
+  font-size: 1.5em;
+  font-weight: 300;
+}
+
+.unitType {
+  font-size: 2.5em;
+  font-weight: 100;
+}
+
+input.searchbox {
+  background: #fcfcfc !important;
+  border-bottom-color: #000;
+  border-width: 0px;
+  border-bottom-width: 2px;
+  padding-left: 0 !important;
+  font-size: 1em;
+  box-shadow: none !important; 
+}
+
+.button.postfix {
+  background-color: rgba(0,0,0,0);
+  color: darkcyan;
+  font-size: 1.6em;
+  transition: all 0.3s ease-in-out;
+}
+
+.button.postfix:hover {
+  color: coral;
+  transition: all 0.3s ease-in-out;
+}
+
+.switch label {
+  background: rgba(0,0,0,0) !important;
+  border-bottom-style: solid;
+  border-width: 2px;
+  border-color: #000;
+} 
+.switch label:after {
+  border-color: darkcyan;
+  border-width: 2px;
+  border-style: solid
+}
+
+small {
+  font-size: 100% !important;
+  font-size: 0.85em !important;
+}
+

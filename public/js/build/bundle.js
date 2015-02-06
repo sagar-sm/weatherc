@@ -3,35 +3,40 @@ var $ = require('jquery-browserify');
 var React = require('react/addons');
 var foundation = require('./foundation.min.js');
 var moment = require('moment');
+var imgMap = require('./imgMap.js');
 
 $(document).foundation();
 
 var SearchBox = React.createClass({displayName: "SearchBox",
   getInitialState: function() {
-    return {query: ''};
+    return {query: '', error: false};
   },
 
   onChange: function(e) {
+    console.log(e);
     this.setState({query: e.target.value});
   },
 
   handleSubmit: function(e) {
-    e.preventDefault();
+    if(e) e.preventDefault();
     this.props.doSearch(this.state.query);
+  },
+
+  onKeyPress: function(e) {
+    if(e.charCode === 13)
+      this.handleSubmit();
   },
 
   render: function() {
     return (
-        React.createElement("div", {className: "large-5 columns"}, 
-          React.createElement("div", {className: "row collapse"}, 
-            React.createElement("div", {className: "small-10 columns"}, 
-              React.createElement("input", {type: "text", placeholder: "Search for City, Country", onChange: this.onChange, value: this.state.query})
-            ), 
-            React.createElement("div", {className: "small-2 columns"}, 
-              React.createElement("a", {href: "#", className: "button postfix", onClick: this.handleSubmit}, React.createElement("i", {className: "fi-magnifying-glass"}))
-            )
-          )
+      React.createElement("div", {className: "row search"}, 
+        React.createElement("div", {className: "small-10 columns"}, 
+          React.createElement("input", {className: "searchbox", type: "text", placeholder: "Search another City", onChange: this.onChange, onKeyPress: this.onKeyPress, value: this.state.query})
+        ), 
+        React.createElement("div", {className: "small-2 columns"}, 
+          React.createElement("a", {href: "#", className: "button postfix", onClick: this.handleSubmit}, React.createElement("i", {className: "fi-magnifying-glass"}))
         )
+      )
     );
   }
 });
@@ -49,25 +54,45 @@ var City = React.createClass({displayName: "City",
       wind:'',
       date:'',
       meta: {
-        query: ''
+        query: '',
+        error: ''
       } 
     };
   },
 
   fetchData: function() {
     $.get(this.props.source, function(result) {
-      if (this.isMounted()) {
+      console.log(result);
+      if(result.cod === '404'){
+        this.setState({
+        meta: {
+          error: 'City not found! Try again with the country name.'
+        }
+      });
+      }
+      else if (this.isMounted()) {
         this.setState({
           city: result.name,
           country: result.sys.country,
-          temperature: this.convert(result.main.temp, 'k', this.props.units),
+          temperature: this.convert(result.main.temp, 'c', this.props.units),
           description: result.weather[0].description,
+          icon: imgMap[result.weather[0].icon],
           humidity: result.main.humidity,
           pressure: result.main.pressure,
           wind: result.wind.speed,
-          date: moment(result.dt*1000).fromNow()
+          date: moment(result.dt*1000).fromNow(),
+          meta: {
+            error: ''
+          }
         });
       }
+    }.bind(this))
+    .fail(function(error){
+      this.setState({
+        meta: {
+          error: 'Could not connect!'
+        }
+      });
     }.bind(this));
   },
 
@@ -83,15 +108,12 @@ var City = React.createClass({displayName: "City",
 
   doSearch: function(query) {
     var base_api = 'http://api.openweathermap.org/data/2.5/weather?q='
-    this.props.source = base_api + query;
+    this.props.source = base_api + query + "&units=metric";
     this.fetchData();
 
   },
 
   convert: function(temp, currentUnit, targetUnit) {
-
-    console.log(currentUnit, targetUnit);
-
     switch(targetUnit) {
       case 'c': switch(currentUnit) {
         case 'c': return Math.round(temp);              //c->c
@@ -112,21 +134,37 @@ var City = React.createClass({displayName: "City",
   },
 
   render: function() {
+    var iconClass = "wi " + this.state.icon;
     return (
       React.createElement("div", {className: "city"}, 
         React.createElement("div", {className: "name"}, 
-          React.createElement("span", {className: "cityName"}, this.state.city, ", "), 
-          React.createElement("span", {className: "countryName"}, this.state.country)
+          React.createElement("div", {className: "cityName"}, this.state.city), 
+          React.createElement("div", {className: "countryName"}, this.state.country)
         ), 
-        React.createElement("div", {className: "temperature"}, this.state.temperature), 
+        React.createElement("i", {className: iconClass}), 
+        React.createElement("div", {className: "temperature"}, this.state.temperature, "°"), 
         React.createElement("div", {className: "description"}, this.state.description), 
-        React.createElement("div", {className: "more"}, 
-          React.createElement("div", {className: "humidity"}, this.state.humidity), 
-          React.createElement("div", {className: "pressure"}, this.state.pressure), 
-          React.createElement("div", {className: "wind"}, this.state.wind), 
-          React.createElement("div", {className: "date"}, "Updated ", this.state.date)
+        React.createElement("div", {className: "row collapse"}, 
+          React.createElement("div", {className: "tile"}, 
+            React.createElement("div", {className: "title"}, "Humidity"), 
+            React.createElement("div", {className: "humidity qty"}, this.state.humidity, "%")
+          ), 
+          React.createElement("div", {className: "tile"}, 
+            React.createElement("div", {className: "title"}, "Pressure"), 
+            React.createElement("div", {className: "pressure qty"}, this.state.pressure, " mb")
+          ), 
+          React.createElement("div", {className: "tile"}, 
+            React.createElement("div", {className: "title"}, "Wind Speed"), 
+            React.createElement("div", {className: "wind qty"}, this.state.wind, " km/h")
+          )
         ), 
-        React.createElement(SearchBox, {query: this.state.meta.query, doSearch: this.doSearch})
+        React.createElement("div", {className: "row collapse"}, 
+          React.createElement("div", {className: "tile"}, 
+            React.createElement("div", {className: "date"}, "Updated ", this.state.date)
+          )
+        ), 
+        React.createElement(SearchBox, {query: this.state.meta.query, doSearch: this.doSearch}), 
+        React.createElement("small", {class: "error"}, this.state.meta.error)
       )
 
     );
@@ -154,21 +192,24 @@ var WeatherApp = React.createClass({displayName: "WeatherApp",
   },
 
   render: function() {
+    var unitType = this.state.units === 'f'? 'F': 'C';
+
     return (
       React.createElement("div", null, 
-        React.createElement("div", {className: "row"}, 
-          React.createElement("div", {className: "large-6 columns"}, 
-            React.createElement(City, {ref: "city1", source: "http://api.openweathermap.org/data/2.5/weather?q=nyc,us", units: this.state.units})
+        React.createElement("div", {className: "row main"}, 
+
+          React.createElement("div", {className: "large-5 large-offset-1 columns"}, 
+            React.createElement(City, {ref: "city1", source: "http://api.openweathermap.org/data/2.5/weather?q=nyc,us&units=metric", units: this.state.units})
           ), 
-          React.createElement("div", {className: "large-6 columns"}, 
-            React.createElement(City, {ref: "city2", source: "http://api.openweathermap.org/data/2.5/weather?q=London,uk", units: this.state.units})
+          React.createElement("div", {className: "large-5 large-offset-1 columns"}, 
+            React.createElement(City, {ref: "city2", source: "http://api.openweathermap.org/data/2.5/weather?q=London,uk&units=metric", units: this.state.units})
           )
         ), 
-        React.createElement("div", {className: "row"}, 
-          React.createElement("div", {className: "switch small", tabIndex: "0"}, 
+        React.createElement("div", {className: "row controls"}, 
+          React.createElement("div", {className: "switch", tabIndex: "0"}, 
             React.createElement("input", {id: "unitSwitch", onChange: this.flipUnits, type: "checkbox"}), 
             React.createElement("label", {htmlFor: "unitSwitch"}), 
-            this.state.units
+            React.createElement("div", {className: "unitType"}, "°", unitType)
           )
         )
       )
@@ -184,7 +225,7 @@ React.render(React.createElement(WeatherApp, null), document.getElementById('con
 
 
 
-},{"./foundation.min.js":166,"jquery-browserify":3,"moment":4,"react/addons":5}],2:[function(require,module,exports){
+},{"./foundation.min.js":166,"./imgMap.js":167,"jquery-browserify":3,"moment":4,"react/addons":5}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -38659,4 +38700,28 @@ module.exports = warning;
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],167:[function(require,module,exports){
+module.exports = {
+  '01d': 'wi-day-sunny',
+  '02d': 'wi-day-cloudy',
+  '03d': 'wi-cloudy',
+  '04d': 'wi-cloudy',
+  '09d': 'wi-day-sprinkle',
+  '10d': 'wi-day-rain',
+  '11d': 'wi-day-thunderstorm',
+  '13d': 'wi-day-snow',
+  '50d': 'wi-day-haze',
+
+  '01n': 'wi-night-clear',
+  '02n': 'wi-night-alt-cloudy',
+  '03n': 'wi-cloudy',
+  '04n': 'wi-cloudy',
+  '09n': 'wi-night-alt-sprinkle',
+  '10n': 'wi-night-alt-rain',
+  '11n': 'wi-night-alt-thunderstorm',
+  '13n': 'wi-night-alt-snow',
+  '50n': 'wi-fog',  
+}
+
+
 },{}]},{},[1]);
