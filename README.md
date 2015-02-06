@@ -1,9 +1,12 @@
 # Weather Comparison App using React.js and OpenWeatherMap API
 
+[]()
+
 ### Data Source:
 * OpenWeatherMap API
 
 ### Frontend stack:
+[main.js](public/js/main.js)
 * React.js
 * Browserify (reactify + watchify)
 * Jade
@@ -11,7 +14,8 @@
 * Weather-icons
 * Gulp
 
-### Server stack: 
+### Server stack:
+[app.js](app.js)
 * Node.js
 * (Express.js)
 
