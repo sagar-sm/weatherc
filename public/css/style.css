@@ -22,6 +22,10 @@ a {
   padding: 7px 7px 0 0 !important;
 }
 
+.more {
+  min-width: 420px !important;
+}
+
 .name {
   margin-bottom: 15%;
 }

@@ -144,7 +144,7 @@ var City = React.createClass({displayName: "City",
         React.createElement("i", {className: iconClass}), 
         React.createElement("div", {className: "temperature"}, this.state.temperature, "°"), 
         React.createElement("div", {className: "description"}, this.state.description), 
-        React.createElement("div", {className: "row collapse"}, 
+        React.createElement("div", {className: "more row collapse"}, 
           React.createElement("div", {className: "tile"}, 
             React.createElement("div", {className: "title"}, "Humidity"), 
             React.createElement("div", {className: "humidity qty"}, this.state.humidity, "%")
