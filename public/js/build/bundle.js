@@ -22,10 +22,14 @@ var SearchBox = React.createClass({displayName: "SearchBox",
 
   render: function() {
     return (
-      React.createElement("div", null, 
-        React.createElement("form", {onSubmit: this.handleSubmit}, 
-          React.createElement("input", {placeholder: "Search for City-Name,Country", onChange: this.onChange, value: this.state.query}), 
-          React.createElement("button", null, "'Search'")
+      React.createElement("div", {className: "large-5 columns"}, 
+        React.createElement("div", {className: "row collapse"}, 
+          React.createElement("div", {className: "small-10 columns"}, 
+            React.createElement("input", {type: "text", placeholder: "Search for City, Country", onChange: this.onChange, value: this.state.query})
+          ), 
+          React.createElement("div", {className: "small-2 columns"}, 
+            React.createElement("a", {href: "#", className: "button postfix", onClick: this.handleSubmit}, React.createElement("i", {className: "fi-magnifying-glass"}))
+          )
         )
       )
     );
@@ -36,26 +40,23 @@ var SearchBox = React.createClass({displayName: "SearchBox",
 var City = React.createClass({displayName: "City",
   getInitialState: function() {
     return {
-      name:'',
-      temperature:'',
-      description:'',
-      humidity:'',
-      pressure:'',
-      wind:'',
-      date:'',
-      meta: {
-        query: ''
-      }
+      query: '',
+      units: ''
     };
   },
 
-  componentDidMount: function() {
+  fetchData: function() {
     $.get(this.props.source, function(result) {
       if (this.isMounted()) {
+        console.log(result);
         this.setState({
-          name: result.name,
-          temperature: result.main.temp,
-          description: result.weather.description,
+          units: 'k'
+        });
+        this.setProps({
+          city: result.name,
+          country: result.country,
+          temperature: this.convert(result.main.temp, 'f'),
+          description: result.weather[0].description,
           humidity: result.main.humidity,
           pressure: result.main.pressure,
           wind: result.wind.speed,
@@ -63,41 +64,59 @@ var City = React.createClass({displayName: "City",
         });
       }
     }.bind(this));
+  },
+
+  componentDidMount: function() {
+    this.fetchData();
   },
 
   doSearch: function(query) {
     var base_api = 'http://api.openweathermap.org/data/2.5/weather?q='
     this.props.source = base_api + query;
+    this.fetchData();
 
-    $.get(this.props.source, function(result) {
-      if (this.isMounted()) {
-        this.setState({
-          name: result.name,
-          temperature: result.main.temp,
-          description: result.weather.description,
-          humidity: result.main.humidity,
-          pressure: result.main.pressure,
-          wind: result.wind.speed,
-          date: moment(result.dt*1000).fromNow()
-        });
-      }
-    }.bind(this));
+  },
 
+  convert: function(temp, targetUnit) {
+    var currentUnit = this.state.units;
+    this.setState({
+      units: targetUnit
+    });
+    switch(targetUnit) {
+      case 'c': switch(currentUnit) {
+        case 'c': return Math.round(temp);              //c->c
+        case 'f': return Math.round(((temp-32)*5)/9);   //f->c
+        case 'k': return Math.round(temp-273.15);       //k->c
+      };
+      case 'f': switch(currentUnit) {
+        case 'c': return Math.round((temp*9)/5-32);
+        case 'f': return Math.round(temp);
+        case 'k': return Math.round((temp-273.15)*1.8+32);
+      };
+      case 'k': switch(currentUnit) {
+        case 'c': return Math.round(temp+273.15);
+        case 'f': return Math.round((temp+ 459.67) * 5 / 9);
+        case 'k': return Math.round(temp);
+      };
+    }
   },
 
   render: function() {
     return (
       React.createElement("div", {className: "city"}, 
-        React.createElement("div", {className: "name"}, this.state.name), 
-        React.createElement("div", {className: "temperature"}, this.state.temperature), 
-        React.createElement("div", {className: "description"}, this.state.description), 
-        React.createElement("div", {className: "more"}, 
-          React.createElement("div", {className: "humidity"}, this.state.humidity), 
-          React.createElement("div", {className: "pressure"}, this.state.pressure), 
-          React.createElement("div", {className: "wind"}, this.state.wind), 
-          React.createElement("div", {className: "date"}, "Updated ", this.state.date)
+        React.createElement("div", {className: "name"}, 
+          React.createElement("span", {className: "cityName"}, this.props.city), 
+          React.createElement("span", {className: "countryName"}, this.props.name)
         ), 
-        React.createElement(SearchBox, {query: this.state.meta.query, doSearch: this.doSearch})
+        React.createElement("div", {className: "temperature"}, this.props.temperature), 
+        React.createElement("div", {className: "description"}, this.props.description), 
+        React.createElement("div", {className: "more"}, 
+          React.createElement("div", {className: "humidity"}, this.props.humidity), 
+          React.createElement("div", {className: "pressure"}, this.props.pressure), 
+          React.createElement("div", {className: "wind"}, this.props.wind), 
+          React.createElement("div", {className: "date"}, "Updated ", this.props.date)
+        ), 
+        React.createElement(SearchBox, {query: this.state.query, doSearch: this.doSearch})
       )
 
     );
